@@ -14,10 +14,10 @@ clap = { version = "3.2.8", features = [
 color-eyre = "0.6.1"
 eyre = "0.6.8"
 flume = "0.10.13"
+futures = "0.3.21"
 log = "0.4.17"
 pretty_env_logger = "0.4.0"
 reqwest = "0.11.11"
 scraper = "0.13.0"
-select = "0.5.0"
 tokio = { version = "1.19.2", features = ["macros", "rt-multi-thread"] }
 url = "2.2.2"
