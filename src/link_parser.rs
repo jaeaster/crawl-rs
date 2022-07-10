@@ -3,6 +3,7 @@ use std::time::Duration;
 use crate::{AtomicSet, Result};
 use flume::{Receiver, Sender};
 use scraper::{Html, Selector};
+use tokio::time::timeout;
 use url::Url;
 
 pub struct LinkParser<'a> {
@@ -33,11 +34,17 @@ impl<'a> LinkParser<'a> {
     /// Concurrently parses urls from html strings received via a channel and sends resultant urls on a separate channel
     pub async fn run(&self) -> Result<()> {
         loop {
-            log::info!("Waiting to recv html to parse");
-            let html = match self.html_rx.recv_async().await {
-                Ok(url) => url,
+            log::info!("Link Parser: Waiting to recv html");
+            let html = match timeout(self.timeout, self.html_rx.recv_async()).await {
+                Ok(recv) => match recv {
+                    Ok(url) => url,
+                    Err(_) => {
+                        log::info!("Link Parser: Html channel dropped");
+                        return Ok(());
+                    }
+                },
                 Err(_) => {
-                    log::warn!("Link Parser receiver timed out");
+                    log::info!("Link Parser: recv timed out");
                     return Ok(());
                 }
             };
@@ -82,11 +89,15 @@ fn parse_urls(html: &str, original_subdomain: &str) -> Vec<Url> {
                         }
                     }
                     Err(e) => {
-                        log::warn!("Found href that is not a valid Url {} : {:?}", href, e);
+                        log::warn!(
+                            "Link Parser: Found href that is not a valid Url {} : {:?}",
+                            href,
+                            e
+                        );
                     }
                 }
             } else {
-                log::warn!("Found <a> without href: {:?}", link.value());
+                log::warn!("Link Parser: Found <a> without href: {:?}", link.value());
             }
         }
     }

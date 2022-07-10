@@ -43,7 +43,7 @@ async fn main() -> eyre::Result<()> {
     let (url_tx, url_rx) = flume::unbounded();
     let (html_tx, html_rx) = flume::unbounded();
 
-    url_tx.send_async(url.clone()).await?;
+    url_tx.send_async(url).await?;
 
     let requester_handle = tokio::spawn(async move {
         let requester = Requester::new(url_rx, html_tx, concurrency, timeout);

@@ -29,7 +29,7 @@ impl Requester {
     pub async fn run(&self) -> Result<()> {
         use futures::stream::StreamExt;
 
-        log::info!("Requesting {} max connections at a time", self.concurrency);
+        log::info!("Requester: Max concurrent connections {}", self.concurrency);
         self.url_rx
             .stream()
             .for_each_concurrent(self.concurrency, |url| async move {
