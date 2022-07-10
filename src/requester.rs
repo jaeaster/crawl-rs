@@ -64,3 +64,47 @@ impl Requester {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    mod run {
+        use super::*;
+        use tokio::join;
+
+        #[tokio::test]
+        async fn basic() {
+            let html = std::fs::read_to_string("tests/fixtures/community.monzo.com.html").unwrap();
+            let url = Url::parse(&mockito::server_url()).unwrap();
+            let _m = mockito::mock("GET", "/")
+                .with_status(200)
+                .with_header("content-type", "text/html; charset=UTF-8")
+                .with_body(html.clone())
+                .create();
+
+            let (url_tx, url_rx) = flume::unbounded();
+            let (html_tx, html_rx) = flume::unbounded();
+
+            url_tx.send(url).unwrap();
+            drop(url_tx);
+
+            let requester = Requester::new(url_rx, html_tx, 1, Duration::from_secs(1));
+            let requester_handle = tokio::spawn(async move {
+                if let Err(e) = requester.run().await {
+                    log::error!("{}", e);
+                }
+            });
+            let mut htmls = Vec::new();
+            loop {
+                if htmls.len() == 1 {
+                    break;
+                }
+                htmls.push(html_rx.recv_async().await.unwrap());
+            }
+
+            join!(requester_handle).0.unwrap();
+            assert_eq!(htmls, vec![html]);
+        }
+    }
+}
