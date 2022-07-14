@@ -8,4 +8,6 @@ pub use link_parser::*;
 pub use requester::*;
 
 pub type Result<T> = eyre::Result<T>;
+
+// TODO: use generic AtomicSet<T>
 pub type AtomicSet = Arc<Mutex<HashSet<String>>>;

@@ -136,6 +136,8 @@ fn normalize_href(href: &str, subdomain: &str) -> String {
 mod tests {
     use super::*;
 
+    // TODO: Test paths that end in .mp3 and .pdf
+    // TODO: Test paths are not requested more than once
     mod run {
         use std::{collections::HashSet, sync::Arc};
 
